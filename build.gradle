@@ -1,0 +1,23 @@
+apply plugin: 'java'
+
+version = '0.1.0'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.+'
+}
+
+
+task dist() {
+	doLast {
+		copy {
+			from file('src/main/resources/net/arnx/nashorn/lib/promise.js')
+			rename(/promise.js$/, 'index.js')
+			into '.'
+		}
+	}
+}
+jar.dependsOn(dist);

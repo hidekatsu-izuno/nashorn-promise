@@ -20,6 +20,10 @@ coverage
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
+# Gradle
+.gradle
+!gradle-wrapper.jar
+
 # node-waf configuration
 .lock-wscript
 
@@ -36,3 +40,4 @@ jspm_packages
 # Optional REPL history
 .node_repl_history
 /bin/
+/build/
