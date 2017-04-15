@@ -53,7 +53,6 @@ public class PromiseTest {
     engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
 
     assertEquals("fulfilled: 6", engine.eval(
-        "var count = 0;\n" +
         "var promise = Promise.all([new Promise(function(fulfill, reject) {\n" +
         "  fulfill(1);\n" +
         "}), new Promise(function(fulfill, reject) {\n" +
@@ -68,7 +67,6 @@ public class PromiseTest {
         "String(promise._future.get().result);\n"));
 
     assertEquals("rejected: 2", engine.eval(
-        "var count = 0;\n" +
         "var promise = Promise.all([new Promise(function(fulfill, reject) {\n" +
         "  fulfill(1);\n" +
         "}), new Promise(function(fulfill, reject) {\n" +
@@ -89,7 +87,6 @@ public class PromiseTest {
     engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
 
     assertEquals("fulfilled: 1", engine.eval(
-        "var count = 0;\n" +
         "var promise = Promise.race([new Promise(function(fulfill, reject) {\n" +
         "  fulfill(1);\n" +
         "}), new Promise(function(fulfill, reject) {\n" +
@@ -104,7 +101,6 @@ public class PromiseTest {
         "String(promise._future.get().result);\n"));
 
     assertEquals("rejected: 1", engine.eval(
-        "var count = 0;\n" +
         "var promise = Promise.race([new Promise(function(fulfill, reject) {\n" +
         "  reject(1);\n" +
         "}), new Promise(function(fulfill, reject) {\n" +
@@ -117,5 +113,57 @@ public class PromiseTest {
         "  return 'rejected: ' + reason;\n" +
         "});\n" +
         "String(promise._future.get().result);\n"));
+  }
+
+  @Test
+  public void testPromiseResolve() throws ScriptException {
+    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+    engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js')");
+
+    assertEquals("fulfilled: test", engine.eval(
+        "var promise = Promise.resolve(new Promise(function(fulfill, reject) {\n" +
+        "  fulfill('test');\n" +
+        "})).then(function(value) {\n" +
+        "  return 'fulfilled: ' + value\n" +
+        "}).catch(function(value) {\n" +
+        "  return 'rejected: ' + value\n" +
+        "});\n" +
+        "promise._future.get().result;\n"));
+
+    assertEquals("fulfilled: test", engine.eval(
+        "var promise = Promise.resolve({\n" +
+        "  then: function(fulfill, reject) {\n" +
+        "    fulfill('test');\n" +
+        "  }\n" +
+        "}).then(function(value) {\n" +
+        "  return 'fulfilled: ' + value\n" +
+        "}).catch(function(value) {\n" +
+        "  return 'rejected: ' + value\n" +
+        "});\n" +
+        "promise._future.get().result;\n"));
+
+    assertEquals("fulfilled: test", engine.eval(
+        "var promise = Promise.resolve('test')" +
+        ".then(function(value) {\n" +
+        "  return 'fulfilled: ' + value\n" +
+        "}).catch(function(value) {\n" +
+        "  return 'rejected: ' + value\n" +
+        "});\n" +
+        "promise._future.get().result;\n"));
+  }
+
+  @Test
+  public void testPromiseReject() throws ScriptException {
+    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+    engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
+
+    assertEquals("rejected: test", engine.eval(
+        "var promise = Promise.reject('test')" +
+        ".then(function(value) {\n" +
+        "  return 'fulfilled: ' + value\n" +
+        "}).catch(function(value) {\n" +
+        "  return 'rejected: ' + value\n" +
+        "});\n" +
+        "promise._future.get().result;\n"));
   }
 }

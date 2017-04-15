@@ -8,9 +8,12 @@
 (function(global) {
 	'use strict';
 
+	var JExecutors = Java.type('java.util.concurrent.Executors');
 	var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
 	var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
 	var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
+
+	var pool = JExecutors.newCachedThreadPool();
 
 	var Promise = function(resolver, futures) {
 		var that = this;
@@ -34,7 +37,7 @@
 				} else if (status == 'rejected') {
 					throw new JPromiseException(result);
 				}
-			});
+			}, pool);
 		}
 	};
 
@@ -61,7 +64,9 @@
 	Promise.resolve = function(value) {
 		if (value instanceof Promise) {
 			return value;
-		} else if (value != null && (typeof value === 'function' || typeof value === 'object') && value.then === 'function') {
+		} else if (value != null
+				&& (typeof value === 'function' || typeof value === 'object')
+				&& typeof value.then === 'function') {
 			return new Promise(function(fulfill, reject) {
 				try {
 					return {
@@ -72,7 +77,7 @@
 				}
 			});
 		} else {
-			return new Promise(JCompletableFuture.completeFutuer({
+			return new Promise(JCompletableFuture.completedFuture({
 				result: value
 			}));
 		}
