@@ -15,32 +15,40 @@ public class PromiseTest {
     ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
     engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
 
-    assertEquals(Boolean.TRUE, engine.eval(
+    assertEquals("fulfilled: test", engine.eval(
         "var result = 'init';\n" +
-        "new Promise(function(fulfill, reject) {\n" +
+        "var promise = new Promise(function(fulfill, reject) {\n" +
         "  fulfill('test');\n" +
         "}).then(function(value) {\n" +
-        "  result = value\n" +
+        "  result = 'fulfilled: ' + value\n" +
+        "}).catch(function(value) {\n" +
+        "  result = 'rejected: ' + value\n" +
         "});\n" +
-        "result === 'test';\n"));
+        "promise._future.get();\n" +
+        "result;\n"));
 
-    assertEquals(Boolean.TRUE, engine.eval(
+    assertEquals("rejected: test", engine.eval(
         "var result = 'init';\n" +
-        "new Promise(function(fulfill, reject) {\n" +
+        "var promise = new Promise(function(fulfill, reject) {\n" +
         "  reject('test');\n" +
         "}).then(function(value) {\n" +
-        "  result = value\n" +
+        "  result = 'fulfilled: ' + value\n" +
+        "}).catch(function(value) {\n" +
+        "  result = 'rejected: ' + value\n" +
         "});\n" +
-        "result === 'init';\n"));
+        "promise._future.get();\n" +
+        "result;\n"));
 
-    assertEquals(Boolean.TRUE, engine.eval(
+    assertEquals("fulfilled: rejected: test", engine.eval(
         "var result = 'init';\n" +
-        "new Promise(function(fulfill, reject) {\n" +
+        "var promise = new Promise(function(fulfill, reject) {\n" +
         "  reject('test');\n" +
         "}).catch(function(value) {\n" +
-        "  result = value\n" +
+        "  return 'rejected: ' + value\n" +
+        "}).then(function(value) {\n" +
+        "  result = 'fulfilled: ' + value\n" +
         "});\n" +
-        "result === 'test';\n"));
+        "promise._future.get();\n" +
+        "result;\n"));
   }
-
 }

@@ -89,26 +89,31 @@
 		return new Promise(that._future.thenApply(function(result) {
 			var result2 = {
 				status: result.status,
-				value: result.value
+				value: result.value,
+				reason: result.reason
 			};
 			try {
 				if (result.status == 'fulfilled') {
 					if (typeof onFulfillment === 'function') {
 						result2.value = (0, onFulfillment)(result.value);
+						result2.reason = undefined;
 					}
 				} else if (result.status == 'rejected') {
 					if (typeof onRejection === 'function') {
 						result2.value = (0, onRejection)(result.reason);
+						result2.reason = undefined;
 						result2.status = 'fulfilled';
 					}
 				}
 			} catch (e) {
 				result2.status = 'rejected';
+				result2.value = undefined;
 				result2.reason = e;
 			}
 			return result2;
 		}));
 	};
+
 	Promise.prototype.catch = function(onRejection) {
 		return this.then(null, onRejection);
 	};
