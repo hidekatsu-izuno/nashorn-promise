@@ -52,7 +52,7 @@ public class PromiseTest {
     ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
     engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
 
-    assertEquals("6: test", engine.eval(
+    assertEquals("fulfilled: 6", engine.eval(
         "var count = 0;\n" +
         "var promise = Promise.all([new Promise(function(fulfill, reject) {\n" +
         "  fulfill(1);\n" +
@@ -61,13 +61,13 @@ public class PromiseTest {
         "}), new Promise(function(fulfill, reject) {\n" +
         "  fulfill(3);\n" +
         "})]).then(function(value) {\n" +
-        "  return value.reduce(function(prev, current) { return prev + current; });\n" +
+        "  return 'fulfilled: ' + value.reduce(function(prev, current) { return prev + current; });\n" +
         "}).catch(function(reason) {\n" +
-        "  return reason;\n" +
+        "  return 'rejected: ' + reason;\n" +
         "});\n" +
         "String(promise._future.get().result);\n"));
 
-    assertEquals("2", engine.eval(
+    assertEquals("rejected: 2", engine.eval(
         "var count = 0;\n" +
         "var promise = Promise.all([new Promise(function(fulfill, reject) {\n" +
         "  fulfill(1);\n" +
@@ -76,9 +76,9 @@ public class PromiseTest {
         "}), new Promise(function(fulfill, reject) {\n" +
         "  fulfill(3);\n" +
         "})]).then(function(value) {\n" +
-        "  return value.reduce(function(prev, current) { return prev + current; });\n" +
+        "  return 'fulfilled: ' + value.reduce(function(prev, current) { return prev + current; });\n" +
         "}).catch(function(reason) {\n" +
-        "  return reason;\n" +
+        "  return 'rejected: ' + reason;\n" +
         "});\n" +
         "String(promise._future.get().result);\n"));
   }
@@ -88,7 +88,7 @@ public class PromiseTest {
     ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
     engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
 
-    assertEquals("4", engine.eval(
+    assertEquals("fulfilled: 1", engine.eval(
         "var count = 0;\n" +
         "var promise = Promise.race([new Promise(function(fulfill, reject) {\n" +
         "  fulfill(1);\n" +
@@ -97,13 +97,13 @@ public class PromiseTest {
         "}), new Promise(function(fulfill, reject) {\n" +
         "  fulfill(3);\n" +
         "})]).then(function(value) {\n" +
-        "  return value.reduce(function(prev, current) { return prev + current; });\n" +
+        "  return 'fulfilled: ' + value;\n" +
         "}).catch(function(reason) {\n" +
-        "  return reason;\n" +
+        "  return 'rejected: ' + reason;\n" +
         "});\n" +
         "String(promise._future.get().result);\n"));
 
-    assertEquals("4", engine.eval(
+    assertEquals("rejected: 1", engine.eval(
         "var count = 0;\n" +
         "var promise = Promise.race([new Promise(function(fulfill, reject) {\n" +
         "  reject(1);\n" +
@@ -112,9 +112,9 @@ public class PromiseTest {
         "}), new Promise(function(fulfill, reject) {\n" +
         "  reject(3);\n" +
         "})]).then(function(value) {\n" +
-        "  return value.reduce(function(prev, current) { return prev + current; });\n" +
+        "  return 'fulfilled: ' + value;\n" +
         "}).catch(function(reason) {\n" +
-        "  return reason;\n" +
+        "  return 'rejected: ' + reason;\n" +
         "});\n" +
         "String(promise._future.get().result);\n"));
   }

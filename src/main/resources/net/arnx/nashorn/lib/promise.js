@@ -39,29 +39,29 @@
 	};
 
 	Promise.all = function(array) {
-		var futures = Java.to(array.map(function(elem) {
+		var futures = array.map(function(elem) {
 			if (elem instanceof Promise) {
 				return elem._future;
 			}
 			return Promise.resolve(elem)._future;
-		}), JCompleteFutureArray);
-		return new Promise(JCompletableFuture.allOf(futures), futures);
+		});
+		return new Promise(JCompletableFuture.allOf(Java.to(futures, JCompleteFutureArray)), futures);
 	};
 
 	Promise.race = function(array) {
-		var futures = Java.to(array.map(function(elem) {
+		var futures = array.map(function(elem) {
 			if (elem instanceof Promise) {
 				return elem._future;
 			}
 			return Promise.resolve(elem)._future;
-		}), JCompleteFutureArray);
-		return new Promise(JCompletableFuture.anyOf(futures), futures);
+		});
+		return new Promise(JCompletableFuture.anyOf(Java.to(futures, JCompleteFutureArray)));
 	};
 
 	Promise.resolve = function(value) {
 		if (value instanceof Promise) {
 			return value;
-		} else if (value !== null && (typeof value === 'function' || typeof value === 'object') && value.then === 'function') {
+		} else if (value != null && (typeof value === 'function' || typeof value === 'object') && value.then === 'function') {
 			return new Promise(function(fulfill, reject) {
 				try {
 					return {
@@ -87,11 +87,15 @@
 	Promise.prototype.then = function(onFulfillment, onRejection) {
 		var that = this;
 		return new Promise(that._future.handle(function(success, error) {
-			if (that._futures && error) {
-				that._futures
+			if (success == null && error == null && that._futures != null) {
+				success = {
+					result: that._futures.map(function(elem) {
+						return elem.get().result;
+					})
+				};
 			}
 
-			if (success !== null) {
+			if (success != null) {
 				if (typeof onFulfillment === 'function') {
 					try {
 						return {
@@ -102,14 +106,14 @@
 					}
 				}
 				return success;
-			} else if (error !== null) {
+			} else if (error != null) {
 				var cerror = error;
 				do {
 					if (cerror instanceof JPromiseException) {
 						error = cerror;
 						break;
 					}
-				} while ((cerror = cerror.getCause()) !== null);
+				} while ((cerror = cerror.getCause()) != null);
 
 				if (typeof onRejection === 'function') {
 					try {
