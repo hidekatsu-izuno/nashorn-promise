@@ -1,0 +1,9 @@
+{
+  "name": "nashorn-promise",
+  "version": "0.1.0",
+  "description": "ES6 Promise support for Nashorn",
+  "main": "index.js",
+  "repository": "https://github.com/hidekatsu-izuno/nashorn-promise.git",
+  "author": "Hidekatsu Izuno <hidekatsu.izuno@gmail.com>",
+  "license": "MIT"
+}
