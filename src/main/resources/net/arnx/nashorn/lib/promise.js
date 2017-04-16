@@ -9,12 +9,9 @@
 	'use strict';
 
 	if (global.Promise === undefined) {
-		var JExecutors = Java.type('java.util.concurrent.Executors');
 		var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
 		var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
 		var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
-
-		var pool = JExecutors.newCachedThreadPool();
 
 		var Promise = function(resolver, futures) {
 			var that = this;
@@ -22,7 +19,7 @@
 				that._future = resolver;
 				that._futures = futures;
 			} else {
-				that._future = JCompletableFuture.supplyAsync(function() {
+				var func = function() {
 					var status, result;
 					(0, resolver)(function(value) {
 						status = 'fulfilled';
@@ -38,7 +35,12 @@
 					} else if (status == 'rejected') {
 						throw new JPromiseException(result);
 					}
-				}, pool);
+				};
+				if (Promise._pool) {
+					that._future = JCompletableFuture.supplyAsync(func, Promise._pool);
+				} else {
+					that._future = JCompletableFuture.supplyAsync(func);
+				}
 			}
 		};
 
