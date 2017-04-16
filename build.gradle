@@ -6,14 +6,16 @@ group = 'net.arnx'
 archivesBaseName = 'nashorn-promise'
 version = '0.1.0'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 repositories {
-    jcenter()
+	jcenter()
 }
 
 dependencies {
-    testCompile 'junit:junit:4.+'
+	testCompile 'junit:junit:4.12'
 }
-
 
 task dist() {
 	doLast {
@@ -26,63 +28,78 @@ task dist() {
 }
 jar.dependsOn(dist);
 
+compileJava {
+	options.encoding = 'UTF-8'
+}
+
+compileTestJava {
+	options.encoding = 'UTF-8'
+}
+
+javadoc {
+	options {
+		links 'https://docs.oracle.com/javase/8/docs/api/'
+		locale = 'en_US'
+		encoding = 'UTF-8'
+		docEncoding = 'UTF-8'
+		charSet = 'UTF-8'
+		author = true
+	}
+}
+
 task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
+	classifier = 'javadoc'
+	from javadoc
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+	classifier = 'sources'
+	from sourceSets.main.allSource
 }
 
 artifacts {
-    archives javadocJar, sourcesJar
+	archives javadocJar, sourcesJar
 }
 
 signing {
-    sign configurations.archives
+	sign configurations.archives
 }
 
 uploadArchives {
-    repositories {
-        mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+	repositories {
+		mavenDeployer {
+			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
+			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+				authentication(userName: "${sonatypeUsername}", password: "${sonatypePassword}")
+			}
 
-        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-        }
+			pom.project {
+				name 'nashorn-promise'
+				packaging 'jar'
+				description 'ES6 Promise polyfil for Nashorn'
+				url 'https://github.com/hidekatsu-izuno/nashorn-promise'
 
-        pom.project {
-            name 'nashorn-promise'
-            packaging 'jar'
-            description 'ES6 Promise polyfil for Nashorn'
-            url 'https://github.com/hidekatsu-izuno/nashorn-promise'
+				scm {
+					url 'https://github.com/hidekatsu-izuno/nashorn-promise'
+					connection 'scm:git:git://github.com/hidekatsu-izuno/nashorn-promise.git'
+				}
 
-            scm {
-                url 'https://github.com/hidekatsu-izuno/nashorn-promise'
-                connection 'scm:git:git://github.com/hidekatsu-izuno/nashorn-promise.git'
-                developerConnection 'scm:git:git@github.com:hidekatsu-izuno/nashorn-promise.git'
-            }
+				licenses {
+					license {
+						name 'MIT License'
+						url 'http://www.opensource.org/licenses/mit-license.php'
+					}
+				}
 
-            licenses {
-                license {
-                    name 'MIT License'
-                    url 'http://www.opensource.org/licenses/mit-license.php'
-                }
-            }
-
-            developers {
-                developer {
-                    id 'hidekatsu.izuno'
-                    name 'Hidekatsu Izuno'
-                    email 'hidekatsu.izuno@gmail.com'
-                }
-            }
-        }
-    }
+				developers {
+					developer {
+						id 'hidekatsu.izuno'
+						name 'Hidekatsu Izuno'
+						email 'hidekatsu.izuno@gmail.com'
+					}
+				}
+			}
+		}
+	}
 }

@@ -8,110 +8,140 @@
 (function(global) {
 	'use strict';
 
+	var JExecutors = Java.type('java.util.concurrent.Executors');
 	var JCompletableFuture = Java.type('java.util.concurrent.CompletableFuture');
+	var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
+	var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
 
-	var Promise = function Promise(resolver) {
+	var pool = JExecutors.newCachedThreadPool();
+
+	var Promise = function(resolver, futures) {
 		var that = this;
 		if (resolver instanceof JCompletableFuture) {
 			that._future = resolver;
+			that._futures = futures;
 		} else {
 			that._future = JCompletableFuture.supplyAsync(function() {
-				var result = {};
-				try {
-					(0, resolver)(function(value) {
-						result.status = 'fulfilled';
-						result.value = value;
-					}, function(reason) {
-						result.status = 'rejected';
-						result.reason = reason;
-					});
-				} catch (e) {
-					result.status = 'rejected';
-					result.reason = e.message;
+				var status, result;
+				(0, resolver)(function(value) {
+					status = 'fulfilled';
+					result = value;
+				}, function(reason) {
+					status = 'rejected';
+					result = reason;
+				});
+				if (status == 'fulfilled') {
+					return {
+						result: result
+					};
+				} else if (status == 'rejected') {
+					throw new JPromiseException(result);
 				}
-				return result;
-			});
+			}, pool);
 		}
 	};
 
 	Promise.all = function(array) {
-		var targets = array.map(function(elem) {
+		var futures = array.map(function(elem) {
 			if (elem instanceof Promise) {
 				return elem._future;
 			}
 			return Promise.resolve(elem)._future;
 		});
-		return new Promise(JCompletableFuture.allOf(targets));
+		return new Promise(JCompletableFuture.allOf(Java.to(futures, JCompleteFutureArray)), futures);
 	};
 
 	Promise.race = function(array) {
-		var targets = array.map(function(elem) {
+		var futures = array.map(function(elem) {
 			if (elem instanceof Promise) {
 				return elem._future;
 			}
 			return Promise.resolve(elem)._future;
 		});
-		return new Promise(JCompletableFuture.anyOf(targets));
+		return new Promise(JCompletableFuture.anyOf(Java.to(futures, JCompleteFutureArray)));
 	};
 
 	Promise.resolve = function(value) {
 		if (value instanceof Promise) {
 			return value;
-		} else if (value !== null && (typeof value === 'function' || typeof value === 'object') && value.then === 'function') {
+		} else if (value != null
+				&& (typeof value === 'function' || typeof value === 'object')
+				&& typeof value.then === 'function') {
 			return new Promise(function(fulfill, reject) {
-				var result = {};
 				try {
-					result.value = value.then(fulfill, reject);
-					result.status = 'fulfilled';
+					return {
+						result: value.then(fulfill, reject)
+					}
 				} catch (e) {
-					result.value = e;
-					result.status = 'rejected';
+					throw new JPromiseException(e);
 				}
-				return result;
 			});
 		} else {
-			return new Promise(JCompletableFuture.completeFutuer({
-				status: 'fulfilled',
-				value: value
+			return new Promise(JCompletableFuture.completedFuture({
+				result: value
 			}));
 		}
 	};
 
 	Promise.reject = function(value) {
-		return new Promise(JCompletableFuture.completeFutuer({
-			status: 'rejected',
-			value: value
-		}));
+		return new Promise(function(fulfill, reject) {
+			reject(value);
+		});
 	};
 
 	Promise.prototype.then = function(onFulfillment, onRejection) {
 		var that = this;
-		return new Promise(that._future.thenApply(function(result) {
-			var result2 = {
-				status: result.status,
-				value: result.value
-			};
-			try {
-				if (result.status == 'fulfilled') {
-					if (typeof onFulfillment === 'function') {
-						result2.value = (0, onFulfillment)(result.value);
-					}
-				} else if (result.status == 'rejected') {
-					if (typeof onRejection === 'function') {
-						result2.value = (0, onRejection)(result.reason);
-						result2.status = 'fulfilled';
+		return new Promise(that._future.handle(function(success, error) {
+			if (success == null && error == null && that._futures != null) {
+				success = {
+					result: that._futures.map(function(elem) {
+						return elem.get().result;
+					})
+				};
+			}
+
+			if (success != null) {
+				if (typeof onFulfillment === 'function') {
+					try {
+						return {
+							result: (0, onFulfillment)(success.result)
+						};
+					} catch (e) {
+						throw new JPromiseException(e)
 					}
 				}
-			} catch (e) {
-				result2.status = 'rejected';
-				result2.reason = e;
+				return success;
+			} else if (error != null) {
+				var cerror = error;
+				do {
+					if (cerror instanceof JPromiseException) {
+						error = cerror;
+						break;
+					}
+				} while ((cerror = cerror.getCause()) != null);
+
+				if (typeof onRejection === 'function') {
+					try {
+						var reason  = error;
+						if (error instanceof JPromiseException) {
+							reason = error.getResult();
+						}
+
+						return {
+							result: (0, onRejection)(reason)
+						};
+					} catch (e) {
+						throw new JPromiseException(e)
+					}
+				}
+				throw error;
 			}
-			return result2;
 		}));
 	};
+
 	Promise.prototype.catch = function(onRejection) {
 		return this.then(null, onRejection);
 	};
 
 	global.Promise = Promise;
-})(Function('return this'));
+})(Function('return this')());
