@@ -8,7 +8,7 @@ This is a polyfill of the ES6 Promise using Java 8 CompletableFuture.
 
 ## Getting Started
 
-## Setup
+### Setup
 
 To add a dependency using Maven, use the following:
 
