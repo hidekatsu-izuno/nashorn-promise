@@ -19,7 +19,7 @@
 				that._future = resolver;
 				that._futures = futures;
 			} else {
-				var func = function() {
+				var func = Java.synchronized(function() {
 					var status, result;
 					(0, resolver)(function(value) {
 						status = 'fulfilled';
@@ -35,7 +35,7 @@
 					} else if (status == 'rejected') {
 						throw new JPromiseException(result);
 					}
-				};
+				}, global);
 				if (Promise._pool) {
 					that._future = JCompletableFuture.supplyAsync(func, Promise._pool);
 				} else {
