@@ -166,4 +166,19 @@ public class PromiseTest {
         "});\n" +
         "promise._future.get().result;\n"));
   }
+
+  @Test
+  public void testPromiseReturn() throws ScriptException {
+    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+    engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
+
+    assertEquals("fulfilled: test", engine.eval(
+        "var promise = Promise.resolve('test')" +
+        ".then(function(value) {\n" +
+        "  return Promise.resolve('fulfilled: ' + value);\n" +
+        "}).then(function(value) {" +
+        "  return value;" +
+        "});\n" +
+        "promise._future.get().result;\n"));
+  }
 }

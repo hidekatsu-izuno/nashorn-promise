@@ -106,6 +106,12 @@
 				if (success != null) {
 					if (typeof onFulfillment === 'function') {
 						try {
+							var value = success.result;
+							if (value instanceof Promise) {
+								return {
+									result: (0, onFulfillment)(value._future.get().result)
+								};
+							}
 							return {
 								result: (0, onFulfillment)(success.result)
 							};
