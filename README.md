@@ -16,7 +16,7 @@ To add a dependency using Maven, use the following:
 <dependency>
   <groupId>net.arnx</groupId>
   <artifactId>nashorn-promise</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 </dependency>
 ```
 
