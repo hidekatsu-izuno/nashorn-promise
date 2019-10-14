@@ -1,10 +1,11 @@
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
+plugins {
+	id 'java-library'
+	id 'maven-publish'
+	id 'signing'
+}
 
 group = 'net.arnx'
-archivesBaseName = 'nashorn-promise'
-version = '0.1.1'
+version = '0.1.2'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -38,68 +39,77 @@ compileTestJava {
 
 javadoc {
 	options {
-		links 'https://docs.oracle.com/javase/8/docs/api/'
+		links(JavaVersion.current().isJava11Compatible() ? 
+			'https://docs.oracle.com/en/java/javase/11/docs/api' : 
+			'https://docs.oracle.com/javase/8/docs/api/')
 		locale = 'en_US'
 		encoding = 'UTF-8'
 		docEncoding = 'UTF-8'
 		charSet = 'UTF-8'
 		author = true
 	}
-}
-
-task javadocJar(type: Jar) {
-	classifier = 'javadoc'
-	from javadoc
+	options.addBooleanOption('html5', 
+		JavaVersion.current().isJava9Compatible())
 }
 
 task sourcesJar(type: Jar) {
-	classifier = 'sources'
-	from sourceSets.main.allSource
+    classifier 'sources'
+    from sourceSets.main.allSource
 }
 
-artifacts {
-	archives javadocJar, sourcesJar
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from javadoc.destinationDir
 }
 
-signing {
-	sign configurations.archives
-}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
 
-uploadArchives {
-	repositories {
-		mavenDeployer {
-			beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+            artifact sourcesJar
+            artifact javadocJar
 
-			repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-				authentication(userName: "${sonatypeUsername}", password: "${sonatypePassword}")
-			}
-
-			pom.project {
-				name 'nashorn-promise'
-				packaging 'jar'
-				description 'ES6 Promise polyfil for Nashorn'
-				url 'https://github.com/hidekatsu-izuno/nashorn-promise'
-
-				scm {
-					url 'https://github.com/hidekatsu-izuno/nashorn-promise'
-					connection 'scm:git:git://github.com/hidekatsu-izuno/nashorn-promise.git'
-				}
+            pom {
+                name = 'nashorn-promise'
+                description = 'ES6 Promise polyfil for Nashorn'
+                url = 'https://github.com/hidekatsu-izuno/nashorn-promise'
 
 				licenses {
 					license {
-						name 'MIT License'
-						url 'http://www.opensource.org/licenses/mit-license.php'
+						name = 'MIT License'
+						url = 'http://www.opensource.org/licenses/mit-license.php'
+					}
+				}
+				
+				developers {
+					developer {
+						id = 'hidekatsu.izuno'
+						name = 'Hidekatsu Izuno'
+						email = 'hidekatsu.izuno@gmail.com'
 					}
 				}
 
-				developers {
-					developer {
-						id 'hidekatsu.izuno'
-						name 'Hidekatsu Izuno'
-						email 'hidekatsu.izuno@gmail.com'
-					}
+				scm {
+					url = 'https://github.com/hidekatsu-izuno/nashorn-promise'
+					connection = 'scm:git:git://github.com/hidekatsu-izuno/nashorn-promise.git'
+					developerConnection = 'scm:git:ssh:git@github.com:hidekatsu-izuno/nashorn-promise.git'
 				}
 			}
 		}
 	}
+	
+	repositories {
+		maven {
+			url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			credentials {
+				username = sonatypeUsername
+				password = sonatypePassword
+			}
+		}
+	}
+}
+
+signing {
+	sign publishing.publications.mavenJava
 }
