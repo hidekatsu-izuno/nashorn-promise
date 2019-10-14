@@ -107,13 +107,11 @@
 					if (typeof onFulfillment === 'function') {
 						try {
 							var value = success.result;
-							if (value instanceof Promise) {
-								return {
-									result: (0, onFulfillment)(value._future.get().result)
-								};
+							while (value instanceof Promise) {
+								value = value._future.get().result;
 							}
 							return {
-								result: (0, onFulfillment)(success.result)
+								result: (0, onFulfillment)(value)
 							};
 						} catch (e) {
 							throw new JPromiseException(e)

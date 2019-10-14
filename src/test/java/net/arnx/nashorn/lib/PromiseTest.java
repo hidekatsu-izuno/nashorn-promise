@@ -181,4 +181,23 @@ public class PromiseTest {
         "});\n" +
         "promise._future.get().result;\n"));
   }
+
+  @Test
+  public void testPromiseNested() throws ScriptException {
+    ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+    engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js');");
+
+    assertEquals("fulfilled: 4", engine.eval(
+        "var promise = Promise.resolve(1)" +
+        ".then(function(value) {\n" +
+        "  return Promise.resolve(value + 1).then(function(value) {" +
+        "    return Promise.resolve(value + 1).then(function(value) {" +
+        "      return Promise.resolve(value + 1);" +
+        "    });\n" +
+        "  });\n" +
+        "}).then(function(value) {" +
+        "  return 'fulfilled: ' + value;" +
+        "});\n" +
+        "promise._future.get().result;\n"));
+  }
 }
