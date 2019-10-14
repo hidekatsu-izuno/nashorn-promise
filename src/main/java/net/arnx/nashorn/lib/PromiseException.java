@@ -1,5 +1,6 @@
 package net.arnx.nashorn.lib;
 
+@SuppressWarnings("serial")
 public class PromiseException extends RuntimeException {
   private Object result;
 
