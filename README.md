@@ -16,7 +16,7 @@ To add a dependency using Maven, use the following:
 <dependency>
   <groupId>net.arnx</groupId>
   <artifactId>nashorn-promise</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
 </dependency>
 ```
 
@@ -24,7 +24,7 @@ To add a dependency using Gradle:
 
 ```groovy
 dependencies {
-  compile 'net.arnx:nashorn-promise:latest.release'
+  compile 'net.arnx:nashorn-promise:0.1.2'
 }
 ```
 
