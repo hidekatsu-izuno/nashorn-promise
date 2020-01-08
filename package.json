@@ -1,6 +1,6 @@
 {
   "name": "nashorn-promise",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "ES6 Promise support for Nashorn",
   "main": "index.js",
   "repository": "https://github.com/hidekatsu-izuno/nashorn-promise.git",
