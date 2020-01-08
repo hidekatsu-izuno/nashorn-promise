@@ -13,11 +13,11 @@
 		var JCompleteFutureArray = Java.type('java.util.concurrent.CompletableFuture[]');
 		var JPromiseException = Java.type('net.arnx.nashorn.lib.PromiseException');
 
-		var Promise = function(resolver, futures) {
+		var Promise = function(resolver, promises) {
 			var that = this;
 			if (resolver instanceof JCompletableFuture) {
 				that._future = resolver;
-				that._futures = futures;
+				that._promises = promises;
 			} else {
 				var func = Java.synchronized(function() {
 					var status, result;
@@ -45,23 +45,43 @@
 		};
 
 		Promise.all = function(array) {
-			var futures = array.map(function(elem) {
-				if (elem instanceof Promise) {
-					return elem._future;
+			if (array == null || array.length == null) {
+				return Promise.reject(new TypeError('array is not iterable'))
+			}
+			if (array.length == 0) {
+				return Promise.resolve([]);
+			}
+
+			var futures = new JCompleteFutureArray(array.length);
+			var promises = [];
+			for (var i = 0; i < array.length; i++) {
+				if (array[i] instanceof Promise) {
+					promises[i] = array[i];
+				} else {
+					promises[i] = Promise.resolve(array[i]);
 				}
-				return Promise.resolve(elem)._future;
-			});
-			return new Promise(JCompletableFuture.allOf(Java.to(futures, JCompleteFutureArray)), futures);
+				futures[i] = promises[i]._future;
+			}
+			return new Promise(JCompletableFuture.allOf(futures), promises);
 		};
 
 		Promise.race = function(array) {
-			var futures = array.map(function(elem) {
-				if (elem instanceof Promise) {
-					return elem._future;
+			if (array == null || array.length == null) {
+				return Promise.reject(new TypeError('array is not iterable'))
+			}
+			if (array.length == 0) {
+				return Promise.resolve([]);
+			}
+
+			var futures = new JCompleteFutureArray(array.length);
+			for (var i = 0; i < array.length; i++) {
+				if (array[i] instanceof Promise) {
+					futures[i] = array[i]._future;
+				} else {
+					futures[i] = Promise.resolve(array[i])._future;
 				}
-				return Promise.resolve(elem)._future;
-			});
-			return new Promise(JCompletableFuture.anyOf(Java.to(futures, JCompleteFutureArray)));
+			}
+			return new Promise(JCompletableFuture.anyOf(futures));
 		};
 
 		Promise.resolve = function(value) {
@@ -95,11 +115,24 @@
 		Promise.prototype.then = function(onFulfillment, onRejection) {
 			var that = this;
 			return new Promise(that._future.handle(function(success, error) {
-				if (success == null && error == null && that._futures != null) {
+				if (success == null && error == null && that._promises != null) {
+					var traverse = function(promise) {
+						if (promise._promises != null) {
+							var result = [];
+							for (var i = 0; i < promise._promises.length; i++) {
+								result[i] = traverse(promise._promises[i]);
+							}
+							return result;
+						}
+						return promise._future.get().result;
+					};
+
+					var result = [];
+					for (var i = 0; i < that._promises.length; i++) {
+						result[i] = traverse(that._promises[i]);
+					}
 					success = {
-						result: that._futures.map(function(elem) {
-							return elem.get().result;
-						})
+						result: result
 					};
 				}
 
