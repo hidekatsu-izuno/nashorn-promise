@@ -199,5 +199,20 @@ public class PromiseTest {
         "  return 'fulfilled: ' + value;" +
         "});\n" +
         "promise._future.get().result;\n"));
+
+    assertEquals("fulfilled: [1,[2,[3]],4]", engine.eval(
+        "var promise = Promise.all([\n" +
+        "  Promise.resolve(1),\n" +
+        "  Promise.all([\n" +
+        "    Promise.resolve(2),\n" +
+        "    Promise.all([\n" +
+        "      Promise.resolve(3)\n" +
+        "    ])\n" +
+        "  ]),\n" +
+        "  Promise.resolve(4)\n" +
+        "]).then(function(values) {" +
+        "  return 'fulfilled: ' + JSON.stringify(values);" +
+        "});\n" +
+        "promise._future.get().result;\n"));
   }
 }
